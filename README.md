@@ -1,2 +1,2 @@
-# Projet-labyrinthe-INF101
-Projet python L1 S1 INF101
+librairie Turtle : https://docs.python.org/fr/3/library/turtle.html
+
