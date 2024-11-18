@@ -60,6 +60,29 @@ def afficheGraphique(dicoJeu):
 			elif dicoJeu["ly"][ligne][e] == 0:
 				square(t, e, ligne, "white")
 
+def afficheGraphiquebonus(dicoJeu):
+	t = dicoJeu["tcell"]
+	bgcolor("black")
+	speed(1000)
+	screensize((len(dicoJeu["ly"])*t), (len(dicoJeu["ly"][0])*t))
+	hideturtle()
+	for ligne in range(len(dicoJeu["ly"])):
+		for colonne in range(len(dicoJeu["ly"][ligne])):
+			if typeCellule(ligne, colonne, dicoJeu) == "entrée":
+				square(t, colonne, ligne, "green")
+			elif typeCellule(ligne, colonne, dicoJeu) == "sortie":
+				square(t, colonne, ligne, "red")
+			elif typeCellule(ligne, colonne, dicoJeu) == "mur":
+				square(t, colonne, ligne, "grey")
+			elif typeCellule(ligne, colonne, dicoJeu) == "passage":
+				square(t, colonne, ligne, "#001bfc")
+			elif typeCellule(ligne, colonne, dicoJeu) == "passage + voie":
+				square(t, colonne, ligne, "#7e8bff")
+			elif typeCellule(ligne, colonne, dicoJeu) == "carrefour":
+				square(t, colonne, ligne, "white")
+			elif typeCellule(ligne, colonne, dicoJeu) == "impasse":
+				square(t, colonne, ligne, "#000e84")
+
 def square(t, x, y, fc):
 	up()
 	goto(-(window_width()/2)+(x*t), (window_height()/2)-(y*t)) # ecris a partir du coin haut gauche de coordonnées (0,0) pour la suite
@@ -106,7 +129,7 @@ def typeCellule(ligne, colonne, dicoJeu):
 			return "impasse"
 
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("labys\laby0.laby")
+ly, In, Out = labyFromFile("Labys/laby1.laby")
 dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 50}
 
 # 1 : Travail preparatoire
@@ -127,3 +150,4 @@ print(cell2pixel(i, j, dicoJeu))
 
 # 4 : Cases spéciales
 print(typeCellule(1,1, dicoJeu))
+afficheGraphiquebonus(dicoJeu)
