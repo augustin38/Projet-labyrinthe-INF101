@@ -29,26 +29,22 @@ def labyFromFile(fn):
 	f.close()
 	return laby, mazeIn, mazeOut
 
-def afficheTextuel(dicoJeu):
+def afficheTextuel():
 	print("\nLabyrinthe Textuel :")
 	for ligne in range(len(dicoJeu["ly"])):
-		for e in range(len(dicoJeu["ly"][ligne])):
-			if ligne == dicoJeu["In"][0] and e == dicoJeu["In"][1]:
+		for colonne in range(len(dicoJeu["ly"][ligne])):
+			if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
 				print("x", end="")
-			elif ligne == dicoJeu["Out"][0] and e == dicoJeu["Out"][1]:
+			elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
 				print("o", end="")
-			elif dicoJeu["ly"][ligne][e] == 1:
+			elif dicoJeu["ly"][ligne][colonne] == 1:
 				print("#", end="")
-			elif dicoJeu["ly"][ligne][e] == 0:
+			elif dicoJeu["ly"][ligne][colonne] == 0:
 				print(" ", end="")
 		print("")
 
-def afficheGraphique(dicoJeu):
+def afficheGraphique():
 	t = dicoJeu["tcell"]
-	bgcolor("black")
-	speed(1000)
-	screensize((len(dicoJeu["ly"])*t), (len(dicoJeu["ly"][0])*t))
-	hideturtle()
 	for ligne in range(len(dicoJeu["ly"])):
 		for e in range(len(dicoJeu["ly"][ligne])):
 			if ligne == dicoJeu["In"][0] and e == dicoJeu["In"][1]:
@@ -60,57 +56,56 @@ def afficheGraphique(dicoJeu):
 			elif dicoJeu["ly"][ligne][e] == 0:
 				square(t, e, ligne, "white")
 
-def afficheGraphiquebonus(dicoJeu):
+def afficheGraphiquebonus():
 	t = dicoJeu["tcell"]
-	bgcolor("black")
-	speed(1000)
-	screensize((len(dicoJeu["ly"])*t), (len(dicoJeu["ly"][0])*t))
-	hideturtle()
 	for ligne in range(len(dicoJeu["ly"])):
 		for colonne in range(len(dicoJeu["ly"][ligne])):
-			if typeCellule(ligne, colonne, dicoJeu) == "entrée":
+			if typeCellule(ligne, colonne) == "entrée":
 				square(t, colonne, ligne, "green")
-			elif typeCellule(ligne, colonne, dicoJeu) == "sortie":
+			elif typeCellule(ligne, colonne) == "sortie":
 				square(t, colonne, ligne, "red")
-			elif typeCellule(ligne, colonne, dicoJeu) == "mur":
+			elif typeCellule(ligne, colonne) == "mur":
 				square(t, colonne, ligne, "grey")
-			elif typeCellule(ligne, colonne, dicoJeu) == "passage":
+			elif typeCellule(ligne, colonne) == "passage":
 				square(t, colonne, ligne, "#001bfc")
-			elif typeCellule(ligne, colonne, dicoJeu) == "passage + voie":
+			elif typeCellule(ligne, colonne) == "passage + voie":
 				square(t, colonne, ligne, "#7e8bff")
-			elif typeCellule(ligne, colonne, dicoJeu) == "carrefour":
+			elif typeCellule(ligne, colonne) == "carrefour":
 				square(t, colonne, ligne, "white")
-			elif typeCellule(ligne, colonne, dicoJeu) == "impasse":
+			elif typeCellule(ligne, colonne) == "impasse":
 				square(t, colonne, ligne, "#000e84")
 
 def square(t, x, y, fc):
 	up()
-	goto(-(window_width()/2)+(x*t), (window_height()/2)-(y*t)) # ecris a partir du coin haut gauche de coordonnées (0,0) pour la suite
-	fillcolor(fc)
+	goto(dicoJeu["csg"][0] + (x*t), dicoJeu["csg"][1] - (y*t)) # ecris a partir du coin superieur gauche
+	color("black", fc)
+	down()
 	begin_fill()
 	for a in range(4):
 		forward(t)
 		right(90)
 	end_fill()
 
-def pixel2cell(x, y, dicoJeu):
+def pixel2cell(x, y):
+	x = abs(dicoJeu["csg"][0] - x) # distance a l'origine du repère (le coin superieur gauche)
+	y = abs(dicoJeu["csg"][1] - y)
 	colonne = int(x/dicoJeu["tcell"])
 	ligne = int(y/dicoJeu["tcell"])
 	return colonne, ligne
 
-def testClic(x, y, dicoJeu):
-	colonne, ligne = pixel2cell(x, y, dicoJeu)
-	if 0 <= colonne <= len(dicoJeu["ly"][0]) and 0 <= ligne <= len(dicoJeu["ly"]):
-		return colonne, ligne
-	print("Erreur, coordonnées non comprises dans le labyrinthe")
-	return None, None
+def testClic(x, y):
+	ligne, colonne  = pixel2cell(x, y)
+	if 0 <= ligne < len(dicoJeu["ly"][0]) and 0 <= colonne < len(dicoJeu["ly"]):
+		print(colonne, ligne)
+	else:
+		print("Erreur, coordonnées non comprises dans le labyrinthe")
 
-def cell2pixel(i, j, dicoJeu):
-	x = i*dicoJeu["tcell"] + (dicoJeu["tcell"]/2)
-	y = -(j*dicoJeu["tcell"] + (dicoJeu["tcell"]/2))
+def cell2pixel(i, j):
+	x = dicoJeu["csg"][0] + j*dicoJeu["tcell"] + (dicoJeu["tcell"]/2) # attention j les colonnes et i les lignes et donc inversé avec coordonnées d'un plan
+	y = dicoJeu["csg"][1] - i*dicoJeu["tcell"] - (dicoJeu["tcell"]/2)
 	return x, y
 
-def typeCellule(ligne, colonne, dicoJeu):
+def typeCellule(ligne, colonne):
 	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
 		return "entrée"
 	elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
@@ -128,26 +123,51 @@ def typeCellule(ligne, colonne, dicoJeu):
 		elif somme_voisins == 3:
 			return "impasse"
 
+def gauche(): 
+	goto(xcor() - dicoJeu["tcell"], ycor())
+def droite(): 
+	goto(xcor() + dicoJeu["tcell"], ycor())
+def bas(): 
+	goto(xcor(), ycor() - dicoJeu["tcell"])
+def haut(): 
+	goto(xcor(), ycor() + dicoJeu["tcell"])
+
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("Labys/laby1.laby")
-dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 50}
+ly, In, Out = labyFromFile("Labys/laby0.laby")
+dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 50, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20]}
+print(dicoJeu["In"])
+bgcolor("black")
+speed(10000)
+hideturtle()
 
-# 1 : Travail preparatoire
-for e in ly:
-    print(e)
-print("Entrée : ", In, "\nSortie : ", Out)
+# 1 : Travail préparatoire
+# for e in ly:
+#     print(e)
+# print("Entrée : ", In, "\nSortie : ", Out)
 
-# 2 : Affichage de labyrinthe
-afficheTextuel(dicoJeu)
-afficheGraphique(dicoJeu) # attention affichage du coin gauche non modifiable
+# # 2 : Affichage de labyrinthe
+# afficheTextuel(dicoJeu)
+# afficheGraphique(dicoJeu) # attention affichage du coin gauche non modifiable
 
-# 3 : Positionnement de la tortue
-onscreenclick(testClic) # erreur ?
+# # 3 : Positionnement de la tortue
+# onscreenclick(testClic) # erreur ?
+# mainloop()
+
+# i, j = pixel2cell(65, 120, dicoJeu)
+# print(cell2pixel(i, j, dicoJeu))
+
+# # 4 : Cases spéciales
+# print(typeCellule(1,1, dicoJeu))
+afficheGraphiquebonus()
+
+# 5 : Travail préparatoire
+up()
+goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+down()
+showturtle()
+onkeypress(gauche,"Left")
+onkeypress(droite,"Right")
+onkeypress(haut,"Up")
+onkeypress(bas,"Down")
+listen()
 mainloop()
-
-i, j = pixel2cell(65, 120, dicoJeu)
-print(cell2pixel(i, j, dicoJeu))
-
-# 4 : Cases spéciales
-print(typeCellule(1,1, dicoJeu))
-afficheGraphiquebonus(dicoJeu)
