@@ -87,18 +87,21 @@ def square(t, x, y, fc):
 	end_fill()
 
 def pixel2cell(x, y):
-	x = abs(dicoJeu["csg"][0] - x) # distance a l'origine du repère (le coin superieur gauche)
-	y = abs(dicoJeu["csg"][1] - y)
+	x = -(dicoJeu["csg"][0] - x) - 20 # distance a l'origine du repère (le coin superieur gauche)
+	y = (dicoJeu["csg"][1] - y) - 20
+	print(x, y)
 	colonne = int(x/dicoJeu["tcell"])
 	ligne = int(y/dicoJeu["tcell"])
 	return colonne, ligne
 
 def testClic(x, y):
-	ligne, colonne  = pixel2cell(x, y)
-	if 0 <= ligne < len(dicoJeu["ly"][0]) and 0 <= colonne < len(dicoJeu["ly"]):
-		print(colonne, ligne)
+	colonne, ligne  = pixel2cell(x, y)
+	if 0 <= ligne < len(dicoJeu["ly"]) and 0 <= colonne < len(dicoJeu["ly"][0]):
+		print(ligne, colonne)
+		return True
 	else:
 		print("Erreur, coordonnées non comprises dans le labyrinthe")
+		return False
 
 def cell2pixel(i, j):
 	x = dicoJeu["csg"][0] + j*dicoJeu["tcell"] + (dicoJeu["tcell"]/2) # attention j les colonnes et i les lignes et donc inversé avec coordonnées d'un plan
@@ -123,19 +126,61 @@ def typeCellule(ligne, colonne):
 		elif somme_voisins == 3:
 			return "impasse"
 
-def gauche(): 
-	goto(xcor() - dicoJeu["tcell"], ycor())
+def collisions(x, y):
+	colonne, ligne  = pixel2cell(x, y)
+	if dicoJeu["ly"][ligne][colonne] != 1:
+		return True
+	else:
+		print("Mur, changez de direction")
+		return False
+
+def gauche():
+	x = xcor() - dicoJeu["tcell"]
+	y = ycor()
+	if testClic(x, y) and collisions(x, y):
+		color("black")
+		tiltangle(180)
+		goto(x,y)
+	else:
+		color("red")
+		done()
+
 def droite(): 
-	goto(xcor() + dicoJeu["tcell"], ycor())
-def bas(): 
-	goto(xcor(), ycor() - dicoJeu["tcell"])
+	x = xcor() + dicoJeu["tcell"]
+	y = ycor()
+	if testClic(x, y) and collisions(x, y):
+		color("black")
+		tiltangle(0)
+		goto(x,y)
+	else:
+		color("red")
+		done()
+
+def bas():
+	x = xcor()
+	y = ycor() - dicoJeu["tcell"]
+	if testClic(x, y) and collisions(x, y):
+		color("black")
+		tiltangle(270)
+		goto(x,y)
+	else:
+		color("red")
+		done()
+
 def haut(): 
-	goto(xcor(), ycor() + dicoJeu["tcell"])
+	x = xcor()
+	y = ycor() + dicoJeu["tcell"]
+	if testClic(x, y) and collisions(x, y):
+		color("black")
+		tiltangle(90)
+		goto(x,y)
+	else:
+		color("red")
+		done()
 
 ############################# Programme principal #############################
 ly, In, Out = labyFromFile("Labys/laby0.laby")
-dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 50, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20]}
-print(dicoJeu["In"])
+dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20]}
 bgcolor("black")
 speed(10000)
 hideturtle()
