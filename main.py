@@ -231,81 +231,111 @@ def gaucheauto(ligne, colonne, deplacements, co_deplacement):
 	if action:
 		deplacements.append("gauche")
 		co_deplacement.append((ligne, colonne-1))
-	return action
+	return action, "gauche"
 
 def droiteauto(ligne, colonne, deplacements, co_deplacement):
 	action = droite()
 	if action:
 		deplacements.append("droite")
 		co_deplacement.append((ligne, colonne+1))
-	return action
+	return action, "droite"
 
 def basauto(ligne, colonne, deplacements, co_deplacement):
 	action = bas()
 	if action:
 		deplacements.append("bas")
 		co_deplacement.append((ligne+1, colonne))
-	return action
+	return action, "bas"
 
 def hautauto(ligne, colonne, deplacements, co_deplacement):
 	action = haut()
 	if action:
 		deplacements.append("haut")
 		co_deplacement.append((ligne-1, colonne))
-	return action
+	return action, "haut"
+
+def deja_explore(ligne, colonne, co_deplacement):
+	if co_deplacement.count((ligne, colonne)) == 2:
+		return True
+	else:
+		return False
 
 def explorer():
 	derniere_action = coté_debut()
 	ligne = dicoJeu["In"][0] ; colonne = dicoJeu["In"][1]
 	deplacements = []
 	co_deplacement = []
+	nb_deplacements = 0
 	typeCell = typeCelluleHardcore(ligne, colonne)
 	while typeCell != "sortie":
 		if typeCell == "impasse" or typeCell == "entrée": # retourne en arrière a une impasse et avance si on est a l'entrée
 			if derniere_action == "haut":
-				action = bas()
-				if action:
-					deplacements.append("bas")
-					co_deplacement.append((ligne+1, colonne))
+				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement) # 4 cas
 			elif derniere_action == "bas":
-				action = haut()
-				if action:
-					deplacements.append("haut")
-					co_deplacement.append((ligne-1, colonne))
+				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
 			elif derniere_action == "gauche":
-				action = droite()
-				if action:
-					deplacements.append("droite")
-					co_deplacement.append((ligne, colonne+1))
+				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
 			elif derniere_action == "droite":
-				action = gauche()
-				if action:
-					deplacements.append("gauche")
-					co_deplacement.append((ligne, colonne-1))
-		elif typeCell == "carrefour": # continue la route dans la même direction qu'avant
+				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
+		elif typeCell == "carrefour": # continue la route dans la même direction qu'avant, sauf si deja exploré
 			if derniere_action == "haut":
-				action = hautauto(ligne, colonne, deplacements, co_deplacement)
+				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement) # 4 cas
 			elif derniere_action == "bas":
-				action = basauto(ligne, colonne, deplacements, co_deplacement)
+				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
 			elif derniere_action == "gauche":
-				action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
+				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
 			elif derniere_action == "droite":
-				action = droiteauto(ligne, colonne, deplacements, co_deplacement)
+				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
 		elif typeCell in ["carrefour sauf bas", "carrefour sauf haut", "carrefour sauf gauche", "carrefour sauf droite"]: # Va en priorité a : droite / haut / gauche / bas
-			if typeCell != "carrefour sauf droite":
-				action = droiteauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf haut":
-				action = hautauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf gauche":
-				action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf bas":
-				action = basauto(ligne, colonne, deplacements, co_deplacement)
-		elif typeCell in ["passage haut bas", "passage haut droite", "passage haut gauche", "passage gauche droite", "passage gauche bas", "passage droite bas"]:
+			if typeCell != "carrefour sauf droite" and not(deja_explore(ligne, colonne+1, co_deplacement)):# 4 cas
+				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
+			elif typeCell != "carrefour sauf haut" and not(deja_explore(ligne-1, colonne, co_deplacement)):
+				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
+			elif typeCell != "carrefour sauf gauche" and not(deja_explore(ligne, colonne-1, co_deplacement)):
+				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
+			elif typeCell != "carrefour sauf bas" and not(deja_explore(ligne+1, colonne, co_deplacement)):
+				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
+		elif typeCell in ["passage haut bas", "passage haut droite", "passage haut gauche", "passage gauche droite", "passage gauche bas", "passage droite bas"]:# part dans la direction autre que celle d'ou on vient
 			if typeCell == "passage haut bas":
 				if derniere_action == "haut":
-					
+					action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement) # 6 cas avec 2 cas pour chaque
+				elif derniere_action == "bas":
+					action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
+			elif typeCell == "passage haut droite":
+				if derniere_action == "haut":
+					action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
+				elif derniere_action == "droite":
+					action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
+			elif typeCell == "passage haut gauche":
+				if derniere_action == "haut":
+					action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
+				elif derniere_action == "gauche":
+					action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
+			elif typeCell == "passage gauche droite":
+				if derniere_action == "gauche":
+					action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
+				elif derniere_action == "droite":
+					action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
+			elif typeCell == "passage gauche bas":
+				if derniere_action == "gauche":
+					action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
+				elif derniere_action == "bas":
+					action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
+			elif typeCell == "passage droite bas":
+				if derniere_action == "droite":
+					action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
+				elif derniere_action == "bas":
+					action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
+		if action:
+			nb_deplacements += 1
 		typeCell = typeCelluleHardcore(ligne, colonne)
+	print("Vous avez gagné en", nb_deplacements, "déplacements.")
 
+# deja_explore(ligne, colonne, co_deplacement)
+# action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
+# action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
+# action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
+# action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
 
 ############################# Programme principal #############################
 ly, In, Out = labyFromFile("Labys/laby0.laby")
@@ -335,15 +365,16 @@ hideturtle()
 afficheGraphiquebonus()
 
 # 6 : Navigation guidée
-up()
-goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
-down()
-showturtle()
-onkeypress(gauche,"Left")
-onkeypress(droite,"Right")
-onkeypress(haut,"Up")
-onkeypress(bas,"Down")
-listen()
-mainloop()
+# up()
+# goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+# down()
+# showturtle()
+# onkeypress(gauche,"Left")
+# onkeypress(droite,"Right")
+# onkeypress(haut,"Up")
+# onkeypress(bas,"Down")
+# listen()
+# mainloop()
 
 # Navigation automatique dans un labyrinthe simple
+explorer()
