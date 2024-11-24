@@ -219,11 +219,11 @@ def typeCelluleHardcore(ligne, colonne):
 def coté_debut():
 	if dicoJeu["In"][1] == 0:
 		return "gauche"
-	elif dicoJeu["In"][1] == (len(dicoJeu["ly"])-1):
+	elif dicoJeu["In"][1] == (len(dicoJeu["ly"][0])-1):
 		return "droite"
-	if dicoJeu["In"][0] == 0:
+	elif dicoJeu["In"][0] == 0:
 		return "haut"
-	elif dicoJeu["In"][0] == (len(dicoJeu["ly"][0])-1):
+	elif dicoJeu["In"][0] == (len(dicoJeu["ly"])-1):
 		return "bas"
 
 def gaucheauto(ligne, colonne, deplacements, co_deplacement):
@@ -260,16 +260,28 @@ def deja_explore(ligne, colonne, co_deplacement):
 	else:
 		return False
 
+def suppr_detours(deplacements, co_deplacement):
+	tot = 0
+	for d in range(len(co_deplacement)):
+		if co_deplacement.count(co_deplacement[d]) == 2:
+			for d2 in range(d, len(co_deplacement)):
+				if co_deplacement[d2] ==  co_deplacement[d]:
+					df = d2
+			del(co_deplacement[d:df + 1])
+			del(deplacements[d:df + 1])
+			tot += df - d
+	print("actions inutiles supprimées :", tot)
+
 def explorer():
 	derniere_action = coté_debut()
 	ligne = dicoJeu["In"][0] ; colonne = dicoJeu["In"][1]
 	deplacements = []
 	co_deplacement = []
 	nb_deplacements = 0
-	action = True
+	action = False
 	typeCell = typeCelluleHardcore(ligne, colonne)
 	while typeCell != "sortie":
-		print(derniere_action, typeCell, action)
+		print(derniere_action, typeCell, action) # verification des beugs
 		if typeCell == "impasse" or typeCell == "entrée": # retourne en arrière a une impasse et avance si on est a l'entrée
 			if derniere_action == "haut":
 				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement) # 4 cas
@@ -280,13 +292,13 @@ def explorer():
 			elif derniere_action == "droite":
 				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
 		elif typeCell == "carrefour": # continue la route dans la même direction qu'avant, sauf si deja exploré
-			if derniere_action == "haut":
-				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement) # 4 cas
-			elif derniere_action == "bas":
+			if derniere_action == "haut" and not(deja_explore(ligne-1, colonne, co_deplacement)):# 4 cas
+				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
+			elif derniere_action == "bas" and not(deja_explore(ligne+1, colonne, co_deplacement)):
 				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
-			elif derniere_action == "gauche":
+			elif derniere_action == "gauche" and not(deja_explore(ligne, colonne-1, co_deplacement)):
 				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
-			elif derniere_action == "droite":
+			elif derniere_action == "droite" and not(deja_explore(ligne, colonne+1, co_deplacement)):
 				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
 		elif typeCell in ["carrefour sauf bas", "carrefour sauf haut", "carrefour sauf gauche", "carrefour sauf droite"]: # Va en priorité a : droite / haut / gauche / bas
 			if typeCell != "carrefour sauf droite" and not(deja_explore(ligne, colonne+1, co_deplacement)):# 4 cas
@@ -332,6 +344,8 @@ def explorer():
 			nb_deplacements += 1
 		colonne, ligne  = pixel2cell(xcor(), ycor())
 		typeCell = typeCelluleHardcore(ligne, colonne)
+		print(deplacements)
+	suppr_detours(deplacements, co_deplacement) # suppression des detours, pas encore uttilisé
 	print("Vous avez gagné en", nb_deplacements, "déplacements.")
 
 # deja_explore(ligne, colonne, co_deplacement)
@@ -341,7 +355,7 @@ def explorer():
 # action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
 
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("Labys/laby1.laby")
+ly, In, Out = labyFromFile("Labys/laby2.laby")
 dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20]}
 bgcolor("black")
 speed(10000)
