@@ -225,6 +225,8 @@ def coté_debut():
 		return "haut"
 	elif dicoJeu["In"][0] == (len(dicoJeu["ly"])-1):
 		return "bas"
+	else:
+		return "milieu"
 
 def gaucheauto(ligne, colonne, deplacements, co_deplacement):
 	action = gauche()
@@ -254,13 +256,19 @@ def hautauto(ligne, colonne, deplacements, co_deplacement):
 		co_deplacement.append((ligne-1, colonne))
 	return action, "haut"
 
-def deja_explore(ligne, colonne, co_deplacement):
-	if co_deplacement.count((ligne, colonne)) == 2:
+def deja_explore(ligne, colonne, co_deplacement, cellules):
+	indices = []
+	c = 0
+	for e in range(len(co_deplacement)):
+		if co_deplacement[e] == (ligne, colonne):
+			c += 1
+			indices.append(e)
+	if (c >= 2 and "impasse" in cellules[indices[0] : indices[1]]) or (ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]): # si il y a deux fois cette case parmis celles parcourues et qu'il y a une impasse entre les deux moments ou elle est parcourue
 		return True
 	else:
 		return False
 
-def suppr_detours(deplacements, co_deplacement):
+def suppr_detours(deplacements, co_deplacement, cellules):
 	tot = 0
 	for d in range(len(co_deplacement)):
 		if co_deplacement.count(co_deplacement[d]) == 2:
@@ -269,6 +277,7 @@ def suppr_detours(deplacements, co_deplacement):
 					df = d2
 			del(co_deplacement[d:df + 1])
 			del(deplacements[d:df + 1])
+			del(cellules[d:df + 1])
 			tot += df - d
 	print("actions inutiles supprimées :", tot)
 
@@ -277,11 +286,12 @@ def explorer():
 	ligne = dicoJeu["In"][0] ; colonne = dicoJeu["In"][1]
 	deplacements = []
 	co_deplacement = []
+	cellules = []
 	nb_deplacements = 0
 	action = False
 	typeCell = typeCelluleHardcore(ligne, colonne)
 	while typeCell != "sortie":
-		print(derniere_action, typeCell, action) # verification des beugs
+		print(derniere_action, typeCell, action) # comprehension des beugs
 		if typeCell == "impasse" or typeCell == "entrée": # retourne en arrière a une impasse et avance si on est a l'entrée
 			if derniere_action == "haut":
 				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement) # 4 cas
@@ -291,23 +301,25 @@ def explorer():
 				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
 			elif derniere_action == "droite":
 				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
+			elif derniere_action == "milieu": # si le début du labyrinthe n'est pas sur un coté
+				typeCell = typeCelluleHardcore(ligne, colonne)
 		elif typeCell == "carrefour": # continue la route dans la même direction qu'avant, sauf si deja exploré
-			if derniere_action == "haut" and not(deja_explore(ligne-1, colonne, co_deplacement)):# 4 cas
+			if derniere_action == "haut" and not(deja_explore(ligne-1, colonne, co_deplacement, cellules)):# 4 cas
 				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
-			elif derniere_action == "bas" and not(deja_explore(ligne+1, colonne, co_deplacement)):
+			elif derniere_action == "bas" and not(deja_explore(ligne+1, colonne, co_deplacement, cellules)):
 				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
-			elif derniere_action == "gauche" and not(deja_explore(ligne, colonne-1, co_deplacement)):
+			elif derniere_action == "gauche" and not(deja_explore(ligne, colonne-1, co_deplacement, cellules)):
 				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
-			elif derniere_action == "droite" and not(deja_explore(ligne, colonne+1, co_deplacement)):
+			elif derniere_action == "droite" and not(deja_explore(ligne, colonne+1, co_deplacement, cellules)):
 				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
 		elif typeCell in ["carrefour sauf bas", "carrefour sauf haut", "carrefour sauf gauche", "carrefour sauf droite"]: # Va en priorité a : droite / haut / gauche / bas
-			if typeCell != "carrefour sauf droite" and not(deja_explore(ligne, colonne+1, co_deplacement)):# 4 cas
+			if typeCell != "carrefour sauf droite" and not(deja_explore(ligne, colonne+1, co_deplacement, cellules)):# 4 cas
 				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf haut" and not(deja_explore(ligne-1, colonne, co_deplacement)):
+			elif typeCell != "carrefour sauf haut" and not(deja_explore(ligne-1, colonne, co_deplacement, cellules)):
 				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf gauche" and not(deja_explore(ligne, colonne-1, co_deplacement)):
+			elif typeCell != "carrefour sauf gauche" and not(deja_explore(ligne, colonne-1, co_deplacement, cellules)):
 				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf bas" and not(deja_explore(ligne+1, colonne, co_deplacement)):
+			elif typeCell != "carrefour sauf bas" and not(deja_explore(ligne+1, colonne, co_deplacement, cellules)):
 				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
 		elif typeCell in ["passage haut bas", "passage haut droite", "passage haut gauche", "passage gauche droite", "passage gauche bas", "passage droite bas"]:# suit le chemin du passage
 			if typeCell == "passage haut bas":
@@ -343,9 +355,10 @@ def explorer():
 		if action:
 			nb_deplacements += 1
 		colonne, ligne  = pixel2cell(xcor(), ycor())
+		cellules.append(typeCell)
 		typeCell = typeCelluleHardcore(ligne, colonne)
 		print(deplacements)
-	suppr_detours(deplacements, co_deplacement) # suppression des detours, pas encore uttilisé
+	suppr_detours(deplacements, co_deplacement) # suppression des detours, pas encore uttilisé (ni verifié)
 	print("Vous avez gagné en", nb_deplacements, "déplacements.")
 
 # deja_explore(ligne, colonne, co_deplacement)
@@ -355,7 +368,7 @@ def explorer():
 # action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
 
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("Labys/laby2.laby")
+ly, In, Out = labyFromFile("Labys/laby1v3.laby")
 dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20]}
 bgcolor("black")
 speed(10000)
@@ -399,3 +412,6 @@ goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
 down()
 showturtle()
 explorer()
+
+#problème actuel : fonction deja_explore qui prend trop ou pas assez de cas en compte 
+#(bloque parfois le chemin alors que c'est pas necessaire, et ne le bloque pas d'autre fois ce qui fait boucler indefiniement)
