@@ -257,16 +257,7 @@ def hautauto(ligne, colonne, deplacements, co_deplacement):
 	return action, "haut"
 
 def deja_explore(ligne, colonne, co_deplacement, cellules):
-	indices = []
-	c = 0
-	for e in range(len(co_deplacement)):
-		if co_deplacement[e] == (ligne, colonne):
-			c += 1
-			indices.append(e)
-	if (c >= 2 and "impasse" in cellules[indices[0] : indices[1]]) or (ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]): # si il y a deux fois cette case parmis celles parcourues et qu'il y a une impasse entre les deux moments ou elle est parcourue
-		return True
-	else:
-		return False
+	return co_deplacement.count((ligne, colonne))
 
 def suppr_detours(deplacements, co_deplacement, cellules):
 	tot = 0
@@ -291,7 +282,7 @@ def explorer():
 	action = False
 	typeCell = typeCelluleHardcore(ligne, colonne)
 	while typeCell != "sortie":
-		print(derniere_action, typeCell, action) # comprehension des beugs
+		# print(derniere_action, typeCell, action) # comprehension des beugs
 		if typeCell == "impasse" or typeCell == "entrée": # retourne en arrière a une impasse et avance si on est a l'entrée
 			if derniere_action == "haut":
 				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement) # 4 cas
@@ -304,22 +295,22 @@ def explorer():
 			elif derniere_action == "milieu": # si le début du labyrinthe n'est pas sur un coté
 				typeCell = typeCelluleHardcore(ligne, colonne)
 		elif typeCell == "carrefour": # continue la route dans la même direction qu'avant, sauf si deja exploré
-			if derniere_action == "haut" and not(deja_explore(ligne-1, colonne, co_deplacement, cellules)):# 4 cas
+			if derniere_action == "haut" and deja_explore(ligne-1, colonne, co_deplacement) <= 4:# 4 cas
 				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
-			elif derniere_action == "bas" and not(deja_explore(ligne+1, colonne, co_deplacement, cellules)):
+			elif derniere_action == "bas" and deja_explore(ligne+1, colonne, co_deplacement) <= 4:
 				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
-			elif derniere_action == "gauche" and not(deja_explore(ligne, colonne-1, co_deplacement, cellules)):
+			elif derniere_action == "gauche" and deja_explore(ligne, colonne-1, co_deplacement) <= 4:
 				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
-			elif derniere_action == "droite" and not(deja_explore(ligne, colonne+1, co_deplacement, cellules)):
+			elif derniere_action == "droite" and deja_explore(ligne, colonne+1, co_deplacement) <= 4:
 				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
 		elif typeCell in ["carrefour sauf bas", "carrefour sauf haut", "carrefour sauf gauche", "carrefour sauf droite"]: # Va en priorité a : droite / haut / gauche / bas
-			if typeCell != "carrefour sauf droite" and not(deja_explore(ligne, colonne+1, co_deplacement, cellules)):# 4 cas
+			if typeCell != "carrefour sauf droite" and deja_explore(ligne, colonne+1, co_deplacement) <= 3:# 4 cas
 				action, derniere_action = droiteauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf haut" and not(deja_explore(ligne-1, colonne, co_deplacement, cellules)):
+			elif typeCell != "carrefour sauf haut" and deja_explore(ligne-1, colonne, co_deplacement) <= 3:
 				action, derniere_action = hautauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf gauche" and not(deja_explore(ligne, colonne-1, co_deplacement, cellules)):
+			elif typeCell != "carrefour sauf gauche" and deja_explore(ligne, colonne-1, co_deplacement) <= 3:
 				action, derniere_action = gaucheauto(ligne, colonne, deplacements, co_deplacement)
-			elif typeCell != "carrefour sauf bas" and not(deja_explore(ligne+1, colonne, co_deplacement, cellules)):
+			elif typeCell != "carrefour sauf bas" and deja_explore(ligne+1, colonne, co_deplacement) <= 3:
 				action, derniere_action = basauto(ligne, colonne, deplacements, co_deplacement)
 		elif typeCell in ["passage haut bas", "passage haut droite", "passage haut gauche", "passage gauche droite", "passage gauche bas", "passage droite bas"]:# suit le chemin du passage
 			if typeCell == "passage haut bas":
@@ -358,7 +349,7 @@ def explorer():
 		cellules.append(typeCell)
 		typeCell = typeCelluleHardcore(ligne, colonne)
 		print(deplacements)
-	suppr_detours(deplacements, co_deplacement) # suppression des detours, pas encore uttilisé (ni verifié)
+	suppr_detours(deplacements, co_deplacement, cellules) # suppression des detours, pas encore uttilisé (ni verifié)
 	print("Vous avez gagné en", nb_deplacements, "déplacements.")
 
 # deja_explore(ligne, colonne, co_deplacement)
