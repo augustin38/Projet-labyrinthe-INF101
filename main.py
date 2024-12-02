@@ -417,8 +417,30 @@ deplacements = explorer()
 
 # modification pour la complexité : créer une grille avec le nombre de passage sur chaque case au lieu de calculer a chaque fois pour toutes les cases avec .count
 
-# modification pour s'adapter : le nombre limite de passage sur une case dépend du type de la case (alors qu'avant c'etait 2 passage max quelle que soit la case)
+# modification pour s'adapter : le nombre limite de passage sur une case dépend du type de la case (alors qu'avant c'etait 2 passage max quelle que soit la case) (pas suffisant)
 
 # P4 Extensions :
 
 # 7 : Améliorer l’interface
+
+# créer une interface graphique de fond ou des "boutons" sont liés a des zones de pixels
+# boutons : Echap / changer de laby
+
+# 8 : créer des labyrinthes 
+
+# créer un menu dans echap qui permet d'acceder a la modification (changement de background + boutons pour positioner les murs)
+# ajouter boutons pour positionner les pieces et les portails
+# verifier que le labyrinthe a une entrée et au moins une sortie (option : et qu'elle est accessible)
+
+# 9 : donjons et tortues
+
+# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran 
+# (piece a afficher a la fin de l'affichage du laby et supprimer après passage sur la case)
+# créer des cases teleportation qui sont link 2 a 2 et qui permettent d'aller a un autre endroit ( 2 cases = 1 couleur)
+# quand le labyrinthe est fini, passer au niveau suivant (faire une graduation de laby de plus en plus durs)
+# proposer des difficultées differentes (nombre de vies, temps pour résoudre, nombre d'actions)
+# idées : uttiliser une deuxieme tortue pour dessiner les objets / pieces = 2 portails = 3 dans liste / 
+
+
+
+
