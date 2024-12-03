@@ -132,13 +132,26 @@ def collisions(x, y):
 		print("Mur, changez de direction")
 		return False
 
+def animations_tortue(x, y):
+	colonne, ligne = pixel2cell(x, y)
+	cell = typeCellule(ligne, colonne)
+	if cell == "sortie":
+		color("green")
+		print("Bravo, vous avez gagné")
+	elif cell == "carrefour":
+		color("pink")
+	elif cell == "impasse":
+		color("brown")
+
 def gauche():
 	x = xcor() - dicoJeu["tcell"]
 	y = ycor()
+	dicoJeu["li deplacements"].append("gauche")
 	if testClic(x, y) and collisions(x, y):
 		color("black")
-		tiltangle(180)
+		tiltangle(180) # se positionne a 180 degres par rapport a 0 (et non pas par rapport a l'ancien angle)
 		goto(x,y)
+		animations_tortue(x, y)
 		return True
 	else:
 		color("red")
@@ -147,10 +160,12 @@ def gauche():
 def droite(): 
 	x = xcor() + dicoJeu["tcell"]
 	y = ycor()
+	dicoJeu["li deplacements"].append("droite")
 	if testClic(x, y) and collisions(x, y):
 		color("black")
 		tiltangle(0)
 		goto(x,y)
+		animations_tortue(x, y)
 		return True
 	else:
 		color("red")
@@ -159,10 +174,12 @@ def droite():
 def bas():
 	x = xcor()
 	y = ycor() - dicoJeu["tcell"]
+	dicoJeu["li deplacements"].append("bas")
 	if testClic(x, y) and collisions(x, y):
 		color("black")
 		tiltangle(270)
 		goto(x,y)
+		animations_tortue(x, y)
 		return True
 	else:
 		color("red")
@@ -171,14 +188,39 @@ def bas():
 def haut(): 
 	x = xcor()
 	y = ycor() + dicoJeu["tcell"]
+	dicoJeu["li deplacements"].append("haut")
 	if testClic(x, y) and collisions(x, y):
 		color("black")
 		tiltangle(90)
 		goto(x,y)
+		animations_tortue(x, y)
 		return True
 	else:
 		color("red")
 		return False
+
+def suivreChemin():
+	liste_mouvements = list(dicoJeu["li deplacements"]) # variante a l'énoncé, on ne recoit pas la liste en argument mais directement depuis dicoJeu
+	up()
+	goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+	down()
+	showturtle()
+	for mouvement in liste_mouvements:
+		if mouvement == "gauche":
+			valide = gauche()
+		elif mouvement == "droite":
+			valide = droite()
+		elif mouvement == "bas":
+			valide = bas()
+		elif mouvement == "haut":
+			valide = haut()
+		if not(valide):
+			print("erreur, mouvement impossible")
+	print("Chemin parcouru avec succès")
+
+def quitter():
+	global ecoute
+	ecoute = False
 
 def typeCelluleHardcore(ligne, colonne):
 	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
@@ -362,10 +404,10 @@ def explorer():
 
 
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("Labys/laby1v3.laby")
-dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20]}
+ly, In, Out = labyFromFile("Labys/laby0.laby")
+dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : []}
 bgcolor("black")
-speed(10000)
+speed('fastest')
 hideturtle()
 
 # P1 Exportation et affichage de labyrinthes :
@@ -393,21 +435,31 @@ afficheGraphiquebonus()
 # P2 Navigation Guidée :
 
 # 6 : Navigation guidée
-# up()
-# goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
-# down()
-# showturtle()
-# onkeypress(gauche,"Left")
-# onkeypress(droite,"Right")
-# onkeypress(haut,"Up")
-# onkeypress(bas,"Down")
-# listen()
-# mainloop()
+ecran = Screen()
+up()
+goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+down()
+showturtle()
+ecran.onkeypress(gauche,"Left")
+ecran.onkeypress(droite,"Right")
+ecran.onkeypress(haut,"Up")
+ecran.onkeypress(bas,"Down")
+ecran.onkeypress(quitter,"q")
+ecran.listen()
+
+# alternative a mainloop() car celle ci ne se stoppe que si on ferme la fenetre (ici on arrete la boucle quand "q" est appuyé sur le clavier)
+ecoute = True
+while ecoute:
+	ecran.update()
+
+# 6)
+suivreChemin()
+done()
 
 # P3 Navigation automatique dans un labyrinthe simple :
 
 # 1)-2)-3)
-deplacements = explorer()
+# deplacements = explorer()
 
 # 4) variante a l'énoncé : la tortue fait directement le chemin a l'écran dans la fonction explorer (et donc graçe a turtle) 
 # donc on n'a pas besoin de tester le chemin dans la fonction suivreChemin().
