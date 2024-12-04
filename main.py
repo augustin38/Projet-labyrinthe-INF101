@@ -1,5 +1,6 @@
 from turtle import *
 
+# Utils
 def labyFromFile(fn):
 	f = open(fn)
 	laby = []
@@ -29,20 +30,118 @@ def labyFromFile(fn):
 	f.close()
 	return laby, mazeIn, mazeOut
 
-def afficheTextuel():
-	print("\nLabyrinthe Textuel :")
-	for ligne in range(len(dicoJeu["ly"])):
-		for colonne in range(len(dicoJeu["ly"][ligne])):
-			if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
-				print("x", end="")
-			elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
-				print("o", end="")
-			elif dicoJeu["ly"][ligne][colonne] == 1:
-				print("#", end="")
-			elif dicoJeu["ly"][ligne][colonne] == 0:
-				print(" ", end="")
-		print("")
+def pixel2cell(x, y):
+	x = -(dicoJeu["csg"][0] - x) - 20 # distance a l'origine du repère (le coin superieur gauche)
+	y = (dicoJeu["csg"][1] - y) - 20
+	colonne = int(x/dicoJeu["tcell"])
+	ligne = int(y/dicoJeu["tcell"])
+	return colonne, ligne
 
+def cell2pixel(i, j):
+	x = dicoJeu["csg"][0] + j*dicoJeu["tcell"] + (dicoJeu["tcell"]/2) # attention j les colonnes et i les lignes et donc inversé avec coordonnées d'un plan
+	y = dicoJeu["csg"][1] - i*dicoJeu["tcell"] - (dicoJeu["tcell"]/2)
+	return x, y
+
+def testClic(x, y):
+	colonne, ligne  = pixel2cell(x, y)
+	if 0 <= ligne < len(dicoJeu["ly"]) and 0 <= colonne < len(dicoJeu["ly"][0]):
+		return True
+	else:
+		print("Erreur, coordonnées non comprises dans le labyrinthe")
+		return False
+
+def collisions(x, y):
+	colonne, ligne  = pixel2cell(x, y)
+	if dicoJeu["ly"][ligne][colonne] != 1:
+		return True
+	else:
+		print("Mur, changez de direction")
+		return False
+
+def typeCellule(ligne, colonne):
+	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
+		return "entrée"
+	elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
+		return "sortie"
+	elif dicoJeu["ly"][ligne][colonne] == 1:
+		return "mur"
+	elif dicoJeu["ly"][ligne][colonne] == 0:
+		somme_voisins = dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne] + dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne][colonne-1]
+		if somme_voisins == 0:
+			return "carrefour"
+		elif somme_voisins == 1:
+			return "passage + voie"
+		elif somme_voisins == 2:
+			return "passage"
+		elif somme_voisins == 3:
+			return "impasse"
+
+def typeCelluleHardcore(ligne, colonne):
+	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
+		return "entrée"
+	elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
+		return "sortie"
+	elif dicoJeu["ly"][ligne][colonne] == 1:
+		return "mur"
+	elif dicoJeu["ly"][ligne][colonne] == 0:
+		somme_voisins = dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne] + dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne][colonne-1]
+		if somme_voisins == 0:
+			return "carrefour"
+		elif somme_voisins == 1:
+			if dicoJeu["ly"][ligne+1][colonne] == 1: # si le seul mur est en bas, alors il n'y en a pas ailleurs
+				return "carrefour sauf bas"
+			elif dicoJeu["ly"][ligne-1][colonne] == 1: # 4 possibilitées
+				return "carrefour sauf haut"
+			elif dicoJeu["ly"][ligne][colonne+1] == 1:
+				return "carrefour sauf droite"
+			elif dicoJeu["ly"][ligne][colonne-1] == 1:
+				return "carrefour sauf gauche"
+		elif somme_voisins == 2:
+			if (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne][colonne+1]) == 2:  # si les murs sont a gauche et a droite, alors il n' en a pas en haut et en bas
+				return "passage haut bas"
+			elif (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne+1][colonne]) == 2: # 6 possibilitées
+				return "passage haut droite"
+			elif (dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne][colonne+1]) == 2:
+				return "passage haut gauche"
+			elif (dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne]) == 2:
+				return "passage gauche droite"
+			elif (dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne-1][colonne]) == 2:
+				return "passage gauche bas"
+			elif (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne-1][colonne]) == 2:
+				return "passage droite bas"
+		elif somme_voisins == 3:
+			return "impasse"
+
+def quitter():
+	global ecoute
+	ecoute = False
+
+def suppr_detours(co_deplacement, cellules):
+	tot = 0
+	for d in range(len(co_deplacement)):
+		if co_deplacement.count(co_deplacement[d]) == 2:
+			for d2 in range(d, len(co_deplacement)):
+				if co_deplacement[d2] ==  co_deplacement[d]:
+					df = d2
+			del(co_deplacement[d:df + 1])
+			del(dicoJeu["li_deplacements"][d:df + 1])
+			del(cellules[d:df + 1])
+			tot += df - d
+	print("actions inutiles supprimées :", tot)
+
+def coté_debut():
+	if dicoJeu["In"][1] == 0:
+		return "gauche"
+	elif dicoJeu["In"][1] == (len(dicoJeu["ly"][0])-1):
+		return "droite"
+	elif dicoJeu["In"][0] == 0:
+		return "haut"
+	elif dicoJeu["In"][0] == (len(dicoJeu["ly"])-1):
+		return "bas"
+	else:
+		return "milieu"
+
+# Graphic
 def afficheGraphique():
 	t = dicoJeu["tcell"]
 	for ligne in range(len(dicoJeu["ly"])):
@@ -86,52 +185,6 @@ def square(t, x, y, fc):
 		right(90)
 	end_fill()
 
-def pixel2cell(x, y):
-	x = -(dicoJeu["csg"][0] - x) - 20 # distance a l'origine du repère (le coin superieur gauche)
-	y = (dicoJeu["csg"][1] - y) - 20
-	colonne = int(x/dicoJeu["tcell"])
-	ligne = int(y/dicoJeu["tcell"])
-	return colonne, ligne
-
-def testClic(x, y):
-	colonne, ligne  = pixel2cell(x, y)
-	if 0 <= ligne < len(dicoJeu["ly"]) and 0 <= colonne < len(dicoJeu["ly"][0]):
-		return True
-	else:
-		print("Erreur, coordonnées non comprises dans le labyrinthe")
-		return False
-
-def cell2pixel(i, j):
-	x = dicoJeu["csg"][0] + j*dicoJeu["tcell"] + (dicoJeu["tcell"]/2) # attention j les colonnes et i les lignes et donc inversé avec coordonnées d'un plan
-	y = dicoJeu["csg"][1] - i*dicoJeu["tcell"] - (dicoJeu["tcell"]/2)
-	return x, y
-
-def typeCellule(ligne, colonne):
-	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
-		return "entrée"
-	elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
-		return "sortie"
-	elif dicoJeu["ly"][ligne][colonne] == 1:
-		return "mur"
-	elif dicoJeu["ly"][ligne][colonne] == 0:
-		somme_voisins = dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne] + dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne][colonne-1]
-		if somme_voisins == 0:
-			return "carrefour"
-		elif somme_voisins == 1:
-			return "passage + voie"
-		elif somme_voisins == 2:
-			return "passage"
-		elif somme_voisins == 3:
-			return "impasse"
-
-def collisions(x, y):
-	colonne, ligne  = pixel2cell(x, y)
-	if dicoJeu["ly"][ligne][colonne] != 1:
-		return True
-	else:
-		print("Mur, changez de direction")
-		return False
-
 def animations_tortue(x, y):
 	colonne, ligne = pixel2cell(x, y)
 	cell = typeCellule(ligne, colonne)
@@ -143,6 +196,7 @@ def animations_tortue(x, y):
 	elif cell == "impasse":
 		color("brown")
 
+# Travel
 def gauche():
 	x = xcor() - dicoJeu["tcell"]
 	y = ycor()
@@ -199,6 +253,34 @@ def haut():
 		color("red")
 		return False
 
+def gaucheauto(ligne, colonne, co_deplacement, nb_exploration_ly):
+	action = gauche()
+	if action:
+		co_deplacement.append((ligne, colonne-1))
+		nb_exploration_ly[ligne][colonne] += 1
+	return action, "gauche"
+
+def droiteauto(ligne, colonne, co_deplacement, nb_exploration_ly):
+	action = droite()
+	if action:
+		co_deplacement.append((ligne, colonne+1))
+		nb_exploration_ly[ligne][colonne] += 1
+	return action, "droite"
+
+def basauto(ligne, colonne, co_deplacement, nb_exploration_ly):
+	action = bas()
+	if action:
+		co_deplacement.append((ligne+1, colonne))
+		nb_exploration_ly[ligne][colonne] += 1
+	return action, "bas"
+
+def hautauto(ligne, colonne, co_deplacement, nb_exploration_ly):
+	action = haut()
+	if action:
+		co_deplacement.append((ligne-1, colonne))
+		nb_exploration_ly[ligne][colonne] += 1
+	return action, "haut"
+
 def suivreChemin(liste_mouvements):
 	up()
 	goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
@@ -233,98 +315,24 @@ def inverserChemin(liste_mouvements):
 			print("erreur, mouvement impossible")
 	print("Chemin parcouru en sens inverse avec succès")
 
-def quitter():
-	global ecoute
-	ecoute = False
+def portail():
+	
+	return tp_coo
 
-def typeCelluleHardcore(ligne, colonne):
-	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
-		return "entrée"
-	elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
-		return "sortie"
-	elif dicoJeu["ly"][ligne][colonne] == 1:
-		return "mur"
-	elif dicoJeu["ly"][ligne][colonne] == 0:
-		somme_voisins = dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne] + dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne][colonne-1]
-		if somme_voisins == 0:
-			return "carrefour"
-		elif somme_voisins == 1:
-			if dicoJeu["ly"][ligne+1][colonne] == 1: # si le seul mur est en bas, alors il n'y en a pas ailleurs
-				return "carrefour sauf bas"
-			elif dicoJeu["ly"][ligne-1][colonne] == 1: # 4 possibilitées
-				return "carrefour sauf haut"
-			elif dicoJeu["ly"][ligne][colonne+1] == 1:
-				return "carrefour sauf droite"
-			elif dicoJeu["ly"][ligne][colonne-1] == 1:
-				return "carrefour sauf gauche"
-		elif somme_voisins == 2:
-			if (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne][colonne+1]) == 2:  # si les murs sont a gauche et a droite, alors il n' en a pas en haut et en bas
-				return "passage haut bas"
-			elif (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne+1][colonne]) == 2: # 6 possibilitées
-				return "passage haut droite"
-			elif (dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne][colonne+1]) == 2:
-				return "passage haut gauche"
-			elif (dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne]) == 2:
-				return "passage gauche droite"
-			elif (dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne-1][colonne]) == 2:
-				return "passage gauche bas"
-			elif (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne-1][colonne]) == 2:
-				return "passage droite bas"
-		elif somme_voisins == 3:
-			return "impasse"
-
-def coté_debut():
-	if dicoJeu["In"][1] == 0:
-		return "gauche"
-	elif dicoJeu["In"][1] == (len(dicoJeu["ly"][0])-1):
-		return "droite"
-	elif dicoJeu["In"][0] == 0:
-		return "haut"
-	elif dicoJeu["In"][0] == (len(dicoJeu["ly"])-1):
-		return "bas"
-	else:
-		return "milieu"
-
-def gaucheauto(ligne, colonne, co_deplacement, nb_exploration_ly):
-	action = gauche()
-	if action:
-		co_deplacement.append((ligne, colonne-1))
-		nb_exploration_ly[ligne][colonne] += 1
-	return action, "gauche"
-
-def droiteauto(ligne, colonne, co_deplacement, nb_exploration_ly):
-	action = droite()
-	if action:
-		co_deplacement.append((ligne, colonne+1))
-		nb_exploration_ly[ligne][colonne] += 1
-	return action, "droite"
-
-def basauto(ligne, colonne, co_deplacement, nb_exploration_ly):
-	action = bas()
-	if action:
-		co_deplacement.append((ligne+1, colonne))
-		nb_exploration_ly[ligne][colonne] += 1
-	return action, "bas"
-
-def hautauto(ligne, colonne, co_deplacement, nb_exploration_ly):
-	action = haut()
-	if action:
-		co_deplacement.append((ligne-1, colonne))
-		nb_exploration_ly[ligne][colonne] += 1
-	return action, "haut"
-
-def suppr_detours(co_deplacement, cellules):
-	tot = 0
-	for d in range(len(co_deplacement)):
-		if co_deplacement.count(co_deplacement[d]) == 2:
-			for d2 in range(d, len(co_deplacement)):
-				if co_deplacement[d2] ==  co_deplacement[d]:
-					df = d2
-			del(co_deplacement[d:df + 1])
-			del(dicoJeu["li_deplacements"][d:df + 1])
-			del(cellules[d:df + 1])
-			tot += df - d
-	print("actions inutiles supprimées :", tot)
+# Independant
+def afficheTextuel():
+	print("\nLabyrinthe Textuel :")
+	for ligne in range(len(dicoJeu["ly"])):
+		for colonne in range(len(dicoJeu["ly"][ligne])):
+			if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
+				print("x", end="")
+			elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
+				print("o", end="")
+			elif dicoJeu["ly"][ligne][colonne] == 1:
+				print("#", end="")
+			elif dicoJeu["ly"][ligne][colonne] == 0:
+				print(" ", end="")
+		print("")
 
 def explorer():
 	up()
@@ -495,6 +503,7 @@ done()
 
 # créer une interface graphique de fond ou des "boutons" sont liés a des zones de pixels
 # boutons : Echap / changer de laby
+# uttiliser une autre tortue pour implémenter des boutons et autres (vitesse car division des taches)
 
 # 8 : créer des labyrinthes 
 
@@ -510,7 +519,3 @@ done()
 # quand le labyrinthe est fini, passer au niveau suivant (faire une graduation de laby de plus en plus durs)
 # proposer des difficultées differentes (nombre de vies, temps pour résoudre, nombre d'actions)
 # idées : uttiliser une deuxieme tortue pour dessiner les objets / pieces = 2 portails = 3 dans liste / 
-
-
-
-
