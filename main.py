@@ -75,15 +75,21 @@ def typeCellule(ligne, colonne):
 			return "passage"
 		elif somme_voisins == 3:
 			return "impasse"
+	elif dicoJeu["ly"][ligne][colonne] == 2: # pièces
+		return "pièce"
+	elif dicoJeu["ly"][ligne][colonne] == 3: # pièces
+		return "diamant"
+	elif dicoJeu["ly"][ligne][colonne] >= 10: # portail
+		return "portail"
 
 def typeCelluleHardcore(ligne, colonne):
-	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
+	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]: # entrée
 		return "entrée"
-	elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]:
+	elif ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1]: # sortie
 		return "sortie"
-	elif dicoJeu["ly"][ligne][colonne] == 1:
+	elif dicoJeu["ly"][ligne][colonne] == 1: # mur
 		return "mur"
-	elif dicoJeu["ly"][ligne][colonne] == 0:
+	elif dicoJeu["ly"][ligne][colonne] == 0: # chemin
 		somme_voisins = dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne] + dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne][colonne-1]
 		if somme_voisins == 0:
 			return "carrefour"
@@ -173,6 +179,12 @@ def afficheGraphiquebonus():
 				square(t, colonne, ligne, "white")
 			elif typeCellule(ligne, colonne) == "impasse":
 				square(t, colonne, ligne, "#ffea7f")
+			# elif typeCellule(ligne, colonne) == "pièce":
+
+			# elif typeCellule(ligne, colonne) == "diamant":
+
+			# elif typeCellule(ligne, colonne) == "portail":
+			# 	square(t, colonne, ligne, "pink")
 
 def square(t, x, y, fc):
 	up()
@@ -315,9 +327,9 @@ def inverserChemin(liste_mouvements):
 			print("erreur, mouvement impossible")
 	print("Chemin parcouru en sens inverse avec succès")
 
-def portail():
-	
-	return tp_coo
+# def portail():
+# 	if 
+# 	return tp_coo
 
 # Independant
 def afficheTextuel():
@@ -371,13 +383,13 @@ def explorer():
 			elif derniere_action == "droite" and nb_exploration_ly[ligne][colonne+1] <= 4:
 				action, derniere_action = droiteauto(ligne, colonne, co_deplacement, nb_exploration_ly)
 		elif typeCell in ["carrefour sauf bas", "carrefour sauf haut", "carrefour sauf gauche", "carrefour sauf droite"]: # Va en priorité a : droite / haut / gauche / bas
-			if typeCell != "carrefour sauf droite" and nb_exploration_ly[ligne][colonne+1] <= 3:# 4 cas
+			if typeCell != "carrefour sauf droite" and nb_exploration_ly[ligne][colonne+1] <= 5:# 4 cas
 				action, derniere_action = droiteauto(ligne, colonne, co_deplacement, nb_exploration_ly)
-			elif typeCell != "carrefour sauf haut" and nb_exploration_ly[ligne-1][colonne] <= 3:
+			elif typeCell != "carrefour sauf haut" and nb_exploration_ly[ligne-1][colonne] <= 5:
 				action, derniere_action = hautauto(ligne, colonne, co_deplacement, nb_exploration_ly)
-			elif typeCell != "carrefour sauf gauche" and nb_exploration_ly[ligne][colonne-1] <= 3:
+			elif typeCell != "carrefour sauf gauche" and nb_exploration_ly[ligne][colonne-1] <= 5:
 				action, derniere_action = gaucheauto(ligne, colonne, co_deplacement, nb_exploration_ly)
-			elif typeCell != "carrefour sauf bas" and nb_exploration_ly[ligne+1][colonne] <= 3:
+			elif typeCell != "carrefour sauf bas" and nb_exploration_ly[ligne+1][colonne] <= 5:
 				action, derniere_action = basauto(ligne, colonne, co_deplacement, nb_exploration_ly)
 		elif typeCell in ["passage haut bas", "passage haut droite", "passage haut gauche", "passage gauche droite", "passage gauche bas", "passage droite bas"]:# suit le chemin du passage
 			if typeCell == "passage haut bas":
@@ -421,9 +433,8 @@ def explorer():
 	print("Vous avez gagné en", nb_deplacements, "déplacements.")
 	print("------------------ Exploration automatique ------------------")
 
-
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("Labys/laby1.laby")
+ly, In, Out = labyFromFile("Labys/laby1v3.laby")
 dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : []}
 bgcolor("black")
 speed('fastest')
@@ -513,7 +524,7 @@ done()
 
 # 9 : donjons et tortues
 
-# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran 
+# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran
 # (piece a afficher a la fin de l'affichage du laby et supprimer après passage sur la case)
 # créer des cases teleportation qui sont link 2 a 2 et qui permettent d'aller a un autre endroit ( 2 cases = 1 couleur)
 # quand le labyrinthe est fini, passer au niveau suivant (faire une graduation de laby de plus en plus durs)
