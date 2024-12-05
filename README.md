@@ -8,6 +8,6 @@ haut : ligne-1 , colonne
 types de cellules (format liste):
 - murs : 1
 - chemins : 0
-- portails : 10 + n (liés deux a deux ex : 10 et 11 ou 12 et 13)
+- portails : (ligne, colonne) du portail associé (format tuple)
 - pièces : 2
 - diamant = 3 (10 pièces)
