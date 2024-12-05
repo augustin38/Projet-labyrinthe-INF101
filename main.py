@@ -5,6 +5,7 @@ def labyFromFile(fn):
 	f = open(fn)
 	laby = []
 	indline = 0
+	dicoportails = {}
 	for fileline in f:
 		labyline = []
 		inditem = 0
@@ -23,6 +24,12 @@ def labyFromFile(fn):
 			elif item == "X":
 				labyline.append(0)
 				mazeOut = [indline,inditem]
+			elif isinstance(item, int) :
+				if item in dicoportails: # associe les deux portails par leurs coordonnées
+					labyline.append(dicoportails[item])
+					laby[dicoportails[item][0], dicoportails[item][1]]
+				else: # récupere le premier portail pour l'associer au deuxieme par la suite
+					dicoportails[item] = (indline, inditem)
 			# discard "\n" char at the end of each line
 			inditem += 1
 		laby.append(labyline)
@@ -79,8 +86,8 @@ def typeCellule(ligne, colonne):
 		return "pièce"
 	elif dicoJeu["ly"][ligne][colonne] == 3: # pièces
 		return "diamant"
-	elif dicoJeu["ly"][ligne][colonne] >= 10: # portail
-		return "portail"
+	elif isinstance(dicoJeu["ly"][ligne][colonne], tuple): # portail
+		return "portail" # (verifie si le type de dicoJeu["ly"][ligne][colonne] est bien un tuple)
 
 def typeCelluleHardcore(ligne, colonne):
 	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]: # entrée
@@ -117,6 +124,12 @@ def typeCelluleHardcore(ligne, colonne):
 				return "passage droite bas"
 		elif somme_voisins == 3:
 			return "impasse"
+	elif dicoJeu["ly"][ligne][colonne] == 2: # pièces
+		return "pièce"
+	elif dicoJeu["ly"][ligne][colonne] == 3: # pièces
+		return "diamant"
+	elif isinstance(dicoJeu["ly"][ligne][colonne], tuple): # portail
+		return "portail" # (verifie si le type de dicoJeu["ly"][ligne][colonne] est bien un tuple)
 
 def quitter():
 	global ecoute
@@ -146,6 +159,11 @@ def coté_debut():
 		return "bas"
 	else:
 		return "milieu"
+
+def portail(ligne, colonne):
+	ligne_tp = dicoJeu[ligne][colonne][0] # renvoie les coordonnées de l'autre coté du portail, c'est a dire les elements du tuple (ligne, colonne)
+	colonne_tp = dicoJeu[ligne][colonne][1]
+	return ligne_tp, colonne_tp
 
 # Graphic
 def afficheGraphique():
@@ -183,8 +201,8 @@ def afficheGraphiquebonus():
 
 			# elif typeCellule(ligne, colonne) == "diamant":
 
-			# elif typeCellule(ligne, colonne) == "portail":
-			# 	square(t, colonne, ligne, "pink")
+			elif typeCellule(ligne, colonne) == "portail":
+				square(t, colonne, ligne, "pink")
 
 def square(t, x, y, fc):
 	up()
@@ -212,8 +230,10 @@ def animations_tortue(x, y):
 def gauche():
 	x = xcor() - dicoJeu["tcell"]
 	y = ycor()
-	dicoJeu["li deplacements"].append("gauche")
-	if testClic(x, y) and collisions(x, y):
+	if deplacement_portail(x,y):
+		return True
+	elif testClic(x, y) and collisions(x, y):
+		dicoJeu["li deplacements"].append("gauche")
 		color("black")
 		tiltangle(180) # se positionne a 180 degres par rapport a 0 (et non pas par rapport a l'ancien angle)
 		goto(x,y)
@@ -226,8 +246,10 @@ def gauche():
 def droite(): 
 	x = xcor() + dicoJeu["tcell"]
 	y = ycor()
-	dicoJeu["li deplacements"].append("droite")
-	if testClic(x, y) and collisions(x, y):
+	if deplacement_portail(x,y):
+		return True
+	elif testClic(x, y) and collisions(x, y):
+		dicoJeu["li deplacements"].append("droite")
 		color("black")
 		tiltangle(0)
 		goto(x,y)
@@ -240,8 +262,10 @@ def droite():
 def bas():
 	x = xcor()
 	y = ycor() - dicoJeu["tcell"]
-	dicoJeu["li deplacements"].append("bas")
-	if testClic(x, y) and collisions(x, y):
+	if deplacement_portail(x,y):
+		return True
+	elif testClic(x, y) and collisions(x, y):
+		dicoJeu["li deplacements"].append("bas")
 		color("black")
 		tiltangle(270)
 		goto(x,y)
@@ -254,8 +278,10 @@ def bas():
 def haut(): 
 	x = xcor()
 	y = ycor() + dicoJeu["tcell"]
-	dicoJeu["li deplacements"].append("haut")
-	if testClic(x, y) and collisions(x, y):
+	if deplacement_portail(x,y):
+		return True
+	elif testClic(x, y) and collisions(x, y):
+		dicoJeu["li deplacements"].append("haut")
 		color("black")
 		tiltangle(90)
 		goto(x,y)
@@ -327,9 +353,17 @@ def inverserChemin(liste_mouvements):
 			print("erreur, mouvement impossible")
 	print("Chemin parcouru en sens inverse avec succès")
 
-# def portail():
-# 	if 
-# 	return tp_coo
+def deplacement_portail(x,y):
+	colonne, ligne = pixel2cell(x,y)
+	if typeCellule(ligne, colonne) == "portail":
+		ligne_tp, colonne_tp = portail(ligne, colonne)
+		up()
+		delay(10) # marque une pause
+		goto(cell2pixel(ligne_tp, colonne_tp)) # se téléporte de l'autre coté du portail
+		down()
+		return True
+	else:
+		return False
 
 # Independant
 def afficheTextuel():
@@ -422,6 +456,12 @@ def explorer():
 					action, derniere_action = droiteauto(ligne, colonne, co_deplacement, nb_exploration_ly)
 				elif derniere_action == "gauche":
 					action, derniere_action = basauto(ligne, colonne, co_deplacement, nb_exploration_ly)
+		elif typeCell == "portail":
+			ligne_tp, colonne_tp = portail(ligne, colonne)
+			up()
+			delay(10) # marque une pause
+			goto(cell2pixel(ligne_tp, colonne_tp)) # se téléporte de l'autre coté du portail
+			down()
 		if action:
 			nb_deplacements += 1
 		colonne, ligne  = pixel2cell(xcor(), ycor()) # update des coordonnées
@@ -434,7 +474,7 @@ def explorer():
 	print("------------------ Exploration automatique ------------------")
 
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("Labys/laby1v3.laby")
+ly, In, Out = labyFromFile("Labys/laby3.laby")
 dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : []}
 bgcolor("black")
 speed('fastest')
@@ -465,22 +505,22 @@ afficheGraphiquebonus()
 # P2 Navigation Guidée :
 
 # 6 : Navigation guidée
-# ecran = Screen()
-# up()
-# goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
-# down()
-# showturtle()
-# ecran.onkeypress(gauche,"Left")
-# ecran.onkeypress(droite,"Right")
-# ecran.onkeypress(haut,"Up")
-# ecran.onkeypress(bas,"Down")
-# ecran.onkeypress(quitter,"q")
-# ecran.listen()
+ecran = Screen()
+up()
+goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+down()
+showturtle()
+ecran.onkeypress(gauche,"Left")
+ecran.onkeypress(droite,"Right")
+ecran.onkeypress(haut,"Up")
+ecran.onkeypress(bas,"Down")
+ecran.onkeypress(quitter,"q")
+ecran.listen()
 
-# # alternative a mainloop() car celle ci ne se stoppe que si on ferme la fenetre (ici on arrete la boucle quand "q" est appuyé sur le clavier)
-# ecoute = True
-# while ecoute:
-# 	ecran.update()
+# alternative a mainloop() car celle ci ne se stoppe que si on ferme la fenetre (ici on arrete la boucle quand "q" est appuyé sur le clavier)
+ecoute = True
+while ecoute:
+	ecran.update()
 
 # 6)-7)-8)
 # mouvements = list(dicoJeu["li deplacements"]) # on copie sans associativité sinon la liste augmenterais a chaque nouveau mouvement (y compris ceux des fonctions)
@@ -491,15 +531,15 @@ afficheGraphiquebonus()
 # P3 Navigation automatique dans un labyrinthe simple :
 
 # 1)-2)-3)
-explorer()
+# explorer()
 
-# 4) variante a l'énoncé : la tortue fait directement le chemin a l'écran dans la fonction explorer (et donc graçe a turtle) 
-# donc on n'a pas besoin de tester le chemin dans la fonction suivreChemin(). On peut quand même la faire suivre le chemin trouvé.
+# # 4) variante a l'énoncé : la tortue fait directement le chemin a l'écran dans la fonction explorer (et donc graçe a turtle) 
+# # donc on n'a pas besoin de tester le chemin dans la fonction suivreChemin(). On peut quand même la faire suivre le chemin trouvé.
 
-mouvements = list(dicoJeu["li deplacements"])
-suivreChemin(mouvements)
-inverserChemin(mouvements)
-done()
+# mouvements = list(dicoJeu["li deplacements"])
+# suivreChemin(mouvements)
+# inverserChemin(mouvements)
+# done()
 
 # problème actuel : fonction deja_explore qui prend trop ou pas assez de cas en compte 
 # (bloque parfois le chemin alors que c'est pas necessaire, et ne le bloque pas d'autre fois ce qui fait boucler indefiniement)
