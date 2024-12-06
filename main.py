@@ -65,6 +65,19 @@ def collisions(x, y):
 		print("Mur, changez de direction")
 		return False
 
+def somme_des_voisins(ligne, colonne):
+	somme = 0
+	if not isinstance(dicoJeu["ly"][ligne+1][colonne], tuple):
+		somme += dicoJeu["ly"][ligne+1][colonne]
+	if not isinstance(dicoJeu["ly"][ligne-1][colonne], tuple):
+		somme += dicoJeu["ly"][ligne-1][colonne]
+	if not isinstance(dicoJeu["ly"][ligne][colonne+1], tuple):
+		somme += dicoJeu["ly"][ligne][colonne+1]
+	if not isinstance(dicoJeu["ly"][ligne][colonne-1], tuple):
+		somme += dicoJeu["ly"][ligne][colonne-1]
+	return somme
+	
+
 def typeCellule(ligne, colonne):
 	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
 		return "entrée"
@@ -73,7 +86,7 @@ def typeCellule(ligne, colonne):
 	elif dicoJeu["ly"][ligne][colonne] == 1:
 		return "mur"
 	elif dicoJeu["ly"][ligne][colonne] == 0:
-		somme_voisins = dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne] + dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne][colonne-1]
+		somme_voisins = somme_des_voisins(ligne, colonne)
 		if somme_voisins == 0:
 			return "carrefour"
 		elif somme_voisins == 1:
@@ -97,7 +110,7 @@ def typeCelluleHardcore(ligne, colonne):
 	elif dicoJeu["ly"][ligne][colonne] == 1: # mur
 		return "mur"
 	elif dicoJeu["ly"][ligne][colonne] == 0: # chemin
-		somme_voisins = dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne] + dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne][colonne-1]
+		somme_voisins = somme_des_voisins(ligne, colonne)
 		if somme_voisins == 0:
 			return "carrefour"
 		elif somme_voisins == 1:
@@ -474,7 +487,7 @@ def explorer():
 	print("------------------ Exploration automatique ------------------")
 
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("Labys/laby3.laby")
+ly, In, Out = labyFromFile("Labys/laby1.laby")
 dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : []}
 bgcolor("black")
 speed('fastest')
@@ -505,22 +518,22 @@ afficheGraphiquebonus()
 # P2 Navigation Guidée :
 
 # 6 : Navigation guidée
-ecran = Screen()
-up()
-goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
-down()
-showturtle()
-ecran.onkeypress(gauche,"Left")
-ecran.onkeypress(droite,"Right")
-ecran.onkeypress(haut,"Up")
-ecran.onkeypress(bas,"Down")
-ecran.onkeypress(quitter,"q")
-ecran.listen()
+# ecran = Screen()
+# up()
+# goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+# down()
+# showturtle()
+# ecran.onkeypress(gauche,"Left")
+# ecran.onkeypress(droite,"Right")
+# ecran.onkeypress(haut,"Up")
+# ecran.onkeypress(bas,"Down")
+# ecran.onkeypress(quitter,"q")
+# ecran.listen()
 
-# alternative a mainloop() car celle ci ne se stoppe que si on ferme la fenetre (ici on arrete la boucle quand "q" est appuyé sur le clavier)
-ecoute = True
-while ecoute:
-	ecran.update()
+# # alternative a mainloop() car celle ci ne se stoppe que si on ferme la fenetre (ici on arrete la boucle quand "q" est appuyé sur le clavier)
+# ecoute = True
+# while ecoute:
+# 	ecran.update()
 
 # 6)-7)-8)
 # mouvements = list(dicoJeu["li deplacements"]) # on copie sans associativité sinon la liste augmenterais a chaque nouveau mouvement (y compris ceux des fonctions)
@@ -531,7 +544,7 @@ while ecoute:
 # P3 Navigation automatique dans un labyrinthe simple :
 
 # 1)-2)-3)
-# explorer()
+explorer()
 
 # # 4) variante a l'énoncé : la tortue fait directement le chemin a l'écran dans la fonction explorer (et donc graçe a turtle) 
 # # donc on n'a pas besoin de tester le chemin dans la fonction suivreChemin(). On peut quand même la faire suivre le chemin trouvé.
