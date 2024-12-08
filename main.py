@@ -64,6 +64,7 @@ def collisions(x, y):
 		return True
 	else:
 		print("Mur, changez de direction")
+		dicoJeu["difficultée"]["vies"] -= 1 # bonus, perd une vie
 		return False
 
 def somme_des_voisins(ligne, colonne):
@@ -246,8 +247,10 @@ def gauche():
 	x = xcor() - dicoJeu["tcell"]
 	y = ycor()
 	if deplacement_portail(x,y):
+		dicoJeu["difficultée"]["actions"] -= 1
 		return True
 	elif testClic(x, y) and collisions(x, y):
+		dicoJeu["difficultée"]["actions"] -= 1
 		dicoJeu["li deplacements"].append("gauche")
 		color("black")
 		tiltangle(180) # se positionne a 180 degres par rapport a 0 (et non pas par rapport a l'ancien angle)
@@ -262,8 +265,10 @@ def droite():
 	x = xcor() + dicoJeu["tcell"]
 	y = ycor()
 	if deplacement_portail(x,y):
+		dicoJeu["difficultée"]["actions"] -= 1
 		return True
 	elif testClic(x, y) and collisions(x, y):
+		dicoJeu["difficultée"]["actions"] -= 1
 		dicoJeu["li deplacements"].append("droite")
 		color("black")
 		tiltangle(0)
@@ -278,8 +283,10 @@ def bas():
 	x = xcor()
 	y = ycor() - dicoJeu["tcell"]
 	if deplacement_portail(x,y):
+		dicoJeu["difficultée"]["actions"] -= 1
 		return True
 	elif testClic(x, y) and collisions(x, y):
+		dicoJeu["difficultée"]["actions"] -= 1
 		dicoJeu["li deplacements"].append("bas")
 		color("black")
 		tiltangle(270)
@@ -294,8 +301,10 @@ def haut():
 	x = xcor()
 	y = ycor() + dicoJeu["tcell"]
 	if deplacement_portail(x,y):
+		dicoJeu["difficultée"]["actions"] -= 1
 		return True
 	elif testClic(x, y) and collisions(x, y):
+		dicoJeu["difficultée"]["actions"] -= 1
 		dicoJeu["li deplacements"].append("haut")
 		color("black")
 		tiltangle(90)
@@ -491,7 +500,7 @@ def explorer():
 ############################# Programme principal #############################
 nom_laby = input("Nom du labyrinthe : ")
 ly, In, Out = labyFromFile("Labys/" + nom_laby + ".laby")
-dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : []}
+dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : [], "difficultée" : {"vies" : 5, "temps" : 500, "actions" : 60}}
 bgcolor("black")
 speed('fastest')
 hideturtle()
@@ -504,34 +513,34 @@ hideturtle()
 # print("Entrée : ", In, "\nSortie : ", Out)
 
 # # 2 : Affichage de labyrinthe
-# afficheTextuel(dicoJeu)
-# afficheGraphique(dicoJeu) # attention affichage du coin gauche non modifiable
+# afficheTextuel()
+# afficheGraphique()
 
 # # 3 : Positionnement de la tortue
-# onscreenclick(testClic) # erreur ?
+# onscreenclick(testClic)
 # mainloop()
 
-# i, j = pixel2cell(65, 120, dicoJeu)
-# print(cell2pixel(i, j, dicoJeu))
+# i, j = pixel2cell(65, 120)
+# print(cell2pixel(i, j))
 
 # # 4 : Cases spéciales
-# print(typeCellule(1,1, dicoJeu))
+# print(typeCellule(1,1))
 afficheGraphiquebonus()
 
 # P2 Navigation Guidée :
 
 # 6 : Navigation guidée
-# ecran = Screen()
-# up()
-# goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
-# down()
-# showturtle()
-# ecran.onkeypress(gauche,"Left")
-# ecran.onkeypress(droite,"Right")
-# ecran.onkeypress(haut,"Up")
-# ecran.onkeypress(bas,"Down")
-# ecran.onkeypress(quitter,"q")
-# ecran.listen()
+ecran = Screen()
+up()
+goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+down()
+showturtle()
+ecran.onkeypress(gauche,"Left")
+ecran.onkeypress(droite,"Right")
+ecran.onkeypress(haut,"Up")
+ecran.onkeypress(bas,"Down")
+ecran.onkeypress(quitter,"q")
+ecran.listen()
 
 # # alternative a mainloop() car celle ci ne se stoppe que si on ferme la fenetre (ici on arrete la boucle quand "q" est appuyé sur le clavier)
 # ecoute = True
@@ -547,7 +556,7 @@ afficheGraphiquebonus()
 # P3 Navigation automatique dans un labyrinthe simple :
 
 # 1)-2)-3)
-explorer()
+# explorer()
 
 # # 4) variante a l'énoncé : la tortue fait directement le chemin a l'écran dans la fonction explorer (et donc graçe a turtle) 
 # # donc on n'a pas besoin de tester le chemin dans la fonction suivreChemin(). On peut quand même la faire suivre le chemin trouvé.
@@ -580,9 +589,7 @@ explorer()
 
 # 9 : donjons et tortues
 
-# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran
-# (piece a afficher a la fin de l'affichage du laby et supprimer après passage sur la case)
 # créer des cases teleportation qui sont link 2 a 2 et qui permettent d'aller a un autre endroit ( 2 cases = 1 couleur)
-# quand le labyrinthe est fini, passer au niveau suivant (faire une graduation de laby de plus en plus durs)
 # proposer des difficultées differentes (nombre de vies, temps pour résoudre, nombre d'actions)
-# idées : uttiliser une deuxieme tortue pour dessiner les objets / pieces = 2 portails = 3 dans liste / 
+# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran
+# quand le labyrinthe est fini, passer au niveau suivant (faire une graduation de laby de plus en plus durs)
