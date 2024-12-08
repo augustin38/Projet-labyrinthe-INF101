@@ -24,10 +24,11 @@ def labyFromFile(fn):
 			elif item == "X":
 				labyline.append(0)
 				mazeOut = [indline,inditem]
-			elif isinstance(item, int) :
+			elif "0" <= item <= "9":
 				if item in dicoportails: # associe les deux portails par leurs coordonnées
 					labyline.append(dicoportails[item])
-					laby[dicoportails[item][0], dicoportails[item][1]]
+					
+					laby[dicoportails[item][0]].insert(dicoportails[item][1], (indline, inditem))
 				else: # récupere le premier portail pour l'associer au deuxieme par la suite
 					dicoportails[item] = (indline, inditem)
 			# discard "\n" char at the end of each line
@@ -76,7 +77,6 @@ def somme_des_voisins(ligne, colonne):
 	if not isinstance(dicoJeu["ly"][ligne][colonne-1], tuple):
 		somme += dicoJeu["ly"][ligne][colonne-1]
 	return somme
-	
 
 def typeCellule(ligne, colonne):
 	if ligne == dicoJeu["In"][0] and colonne == dicoJeu["In"][1]:
@@ -114,26 +114,27 @@ def typeCelluleHardcore(ligne, colonne):
 		if somme_voisins == 0:
 			return "carrefour"
 		elif somme_voisins == 1:
-			if dicoJeu["ly"][ligne+1][colonne] == 1: # si le seul mur est en bas, alors il n'y en a pas ailleurs
+			if not isinstance(dicoJeu["ly"][ligne+1][colonne], tuple) and dicoJeu["ly"][ligne+1][colonne] == 1: # si le seul mur est en bas, alors il n'y en a pas ailleurs
 				return "carrefour sauf bas"
-			elif dicoJeu["ly"][ligne-1][colonne] == 1: # 4 possibilitées
+			elif not isinstance(dicoJeu["ly"][ligne-1][colonne], tuple) and dicoJeu["ly"][ligne-1][colonne] == 1: # 4 possibilitées
 				return "carrefour sauf haut"
-			elif dicoJeu["ly"][ligne][colonne+1] == 1:
+			elif not isinstance(dicoJeu["ly"][ligne][colonne]+1, tuple) and dicoJeu["ly"][ligne][colonne+1] == 1:
 				return "carrefour sauf droite"
-			elif dicoJeu["ly"][ligne][colonne-1] == 1:
+			elif not isinstance(dicoJeu["ly"][ligne+1][colonne-1], tuple) and dicoJeu["ly"][ligne][colonne-1] == 1:
 				return "carrefour sauf gauche"
 		elif somme_voisins == 2:
-			if (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne][colonne+1]) == 2:  # si les murs sont a gauche et a droite, alors il n' en a pas en haut et en bas
+			# Hyyyyyperrr long car on doit verifier que chaque coté tésté n'est pas un tuple..
+			if not isinstance(dicoJeu["ly"][ligne][colonne+1], tuple) and not isinstance(dicoJeu["ly"][ligne][colonne-1], tuple) and (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne][colonne+1]) == 2:  # si les murs sont a gauche et a droite, alors il n' en a pas en haut et en bas
 				return "passage haut bas"
-			elif (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne+1][colonne]) == 2: # 6 possibilitées
+			elif not isinstance(dicoJeu["ly"][ligne][colonne-1], tuple) and not isinstance(dicoJeu["ly"][ligne+1][colonne], tuple) and (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne+1][colonne]) == 2: # 6 possibilitées
 				return "passage haut droite"
-			elif (dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne][colonne+1]) == 2:
+			elif not isinstance(dicoJeu["ly"][ligne+1][colonne], tuple) and not isinstance(dicoJeu["ly"][ligne][colonne+1], tuple) and (dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne][colonne+1]) == 2:
 				return "passage haut gauche"
-			elif (dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne]) == 2:
+			elif not isinstance(dicoJeu["ly"][ligne+1][colonne], tuple) and not isinstance(dicoJeu["ly"][ligne-1][colonne], tuple) and (dicoJeu["ly"][ligne+1][colonne] + dicoJeu["ly"][ligne-1][colonne]) == 2:
 				return "passage gauche droite"
-			elif (dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne-1][colonne]) == 2:
+			elif not isinstance(dicoJeu["ly"][ligne][colonne+1], tuple) and not isinstance(dicoJeu["ly"][ligne-1][colonne], tuple) and (dicoJeu["ly"][ligne][colonne+1] + dicoJeu["ly"][ligne-1][colonne]) == 2:
 				return "passage gauche bas"
-			elif (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne-1][colonne]) == 2:
+			elif not isinstance(dicoJeu["ly"][ligne][colonne-1], tuple) and not isinstance(dicoJeu["ly"][ligne-1][colonne], tuple) and (dicoJeu["ly"][ligne][colonne-1] + dicoJeu["ly"][ligne-1][colonne]) == 2:
 				return "passage droite bas"
 		elif somme_voisins == 3:
 			return "impasse"
@@ -174,8 +175,8 @@ def coté_debut():
 		return "milieu"
 
 def portail(ligne, colonne):
-	ligne_tp = dicoJeu[ligne][colonne][0] # renvoie les coordonnées de l'autre coté du portail, c'est a dire les elements du tuple (ligne, colonne)
-	colonne_tp = dicoJeu[ligne][colonne][1]
+	ligne_tp = dicoJeu["ly"][ligne][colonne][0] # renvoie les coordonnées de l'autre coté du portail, c'est a dire les elements du tuple (ligne, colonne)
+	colonne_tp = dicoJeu["ly"][ligne][colonne][1]
 	return ligne_tp, colonne_tp
 
 # Graphic
@@ -196,25 +197,26 @@ def afficheGraphiquebonus():
 	t = dicoJeu["tcell"]
 	for ligne in range(len(dicoJeu["ly"])):
 		for colonne in range(len(dicoJeu["ly"][ligne])):
-			if typeCellule(ligne, colonne) == "entrée":
+			Cell = typeCellule(ligne, colonne)
+			if Cell == "entrée":
 				square(t, colonne, ligne, "green")
-			elif typeCellule(ligne, colonne) == "sortie":
+			elif Cell == "sortie":
 				square(t, colonne, ligne, "red")
-			elif typeCellule(ligne, colonne) == "mur":
+			elif Cell == "mur":
 				square(t, colonne, ligne, "grey")
-			elif typeCellule(ligne, colonne) == "passage":
+			elif Cell == "passage":
 				square(t, colonne, ligne, "#fef0a8")
-			elif typeCellule(ligne, colonne) == "passage + voie":
+			elif Cell == "passage + voie":
 				square(t, colonne, ligne, "#fff8d4")
-			elif typeCellule(ligne, colonne) == "carrefour":
+			elif Cell == "carrefour":
 				square(t, colonne, ligne, "white")
-			elif typeCellule(ligne, colonne) == "impasse":
+			elif Cell == "impasse":
 				square(t, colonne, ligne, "#ffea7f")
-			# elif typeCellule(ligne, colonne) == "pièce":
+			# elif Cell == "pièce":
 
-			# elif typeCellule(ligne, colonne) == "diamant":
+			# elif Cell == "diamant":
 
-			elif typeCellule(ligne, colonne) == "portail":
+			elif Cell == "portail":
 				square(t, colonne, ligne, "pink")
 
 def square(t, x, y, fc):
@@ -469,12 +471,12 @@ def explorer():
 					action, derniere_action = droiteauto(ligne, colonne, co_deplacement, nb_exploration_ly)
 				elif derniere_action == "gauche":
 					action, derniere_action = basauto(ligne, colonne, co_deplacement, nb_exploration_ly)
-		elif typeCell == "portail":
+		elif typeCell == "portail" and derniere_action != "teleportation": # pour ne pas qu'il boucle entre les deux cotés du portail
 			ligne_tp, colonne_tp = portail(ligne, colonne)
 			up()
-			delay(10) # marque une pause
 			goto(cell2pixel(ligne_tp, colonne_tp)) # se téléporte de l'autre coté du portail
 			down()
+			derniere_action = "teleportation"
 		if action:
 			nb_deplacements += 1
 		colonne, ligne  = pixel2cell(xcor(), ycor()) # update des coordonnées
@@ -487,7 +489,8 @@ def explorer():
 	print("------------------ Exploration automatique ------------------")
 
 ############################# Programme principal #############################
-ly, In, Out = labyFromFile("Labys/laby1.laby")
+nom_laby = input("Nom du labyrinthe : ")
+ly, In, Out = labyFromFile("Labys/" + nom_laby + ".laby")
 dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : []}
 bgcolor("black")
 speed('fastest')
