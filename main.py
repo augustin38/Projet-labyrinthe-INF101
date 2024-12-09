@@ -523,7 +523,7 @@ if gamemode != "campagne":
 # onscreenclick(testClic)
 # mainloop()
 
-# i, j = pixel2cell(65, 120)
+# i, j = pixel2cell(65, 120)# on transforme les pixels en milieu de case (impossible autrement)
 # print(cell2pixel(i, j))
 
 # # 4 : Cases spéciales
@@ -582,23 +582,10 @@ if gamemode == "auto":
 
 # P4 Extensions :
 
-# 7 : Améliorer l’interface
-
-# créer une interface graphique de fond ou des "boutons" sont liés a des zones de pixels
-# boutons : Echap / changer de laby
-# uttiliser une autre tortue pour implémenter des boutons et autres (vitesse car division des taches)
-
-# 8 : créer des labyrinthes 
-
-# créer un menu dans echap qui permet d'acceder a la modification (changement de background + boutons pour positioner les murs)
-# ajouter boutons pour positionner les pieces et les portails
-# verifier que le labyrinthe a une entrée et au moins une sortie (option : et qu'elle est accessible)
-
 # 9 : donjons et tortues
 
 # créer des cases teleportation qui sont link 2 a 2 et qui permettent d'aller a un autre endroit ( 2 cases = 1 couleur)
-# proposer des difficultées differentes (nombre de vies, temps pour résoudre, nombre d'actions) afficher avec write
-# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran afficher avec write
+# proposer des difficultées differentes (nombre de vies, temps pour résoudre, nombre d'actions)
 # quand le labyrinthe est fini, passer au niveau suivant (faire une graduation de laby de plus en plus durs)
 if gamemode == "campagne":
 	bgcolor("#c28a00") ; speed('fastest')
@@ -637,3 +624,5 @@ if gamemode == "campagne":
 			lvl += 1
 			dicoJeu["difficultée"]["vies"] += 1 ; dicoJeu["difficultée"]["actions"] += lvl*10 ; dicoJeu["difficultée"]["temps"] += lvl*10
 	print("Gagné, vous avez fini la campagne. Il vous restais : \n",dicoJeu["difficultée"]["vies"], "vies \n",dicoJeu["difficultée"]["actions"], "actions \n", dicoJeu["difficultée"]["temps"] - (timeB - timeA), "segondes a jouer")
+
+# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran
