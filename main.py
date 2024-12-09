@@ -1,4 +1,5 @@
 from turtle import *
+from time import *
 
 # Utils
 def labyFromFile(fn):
@@ -52,7 +53,7 @@ def cell2pixel(i, j):
 
 def testClic(x, y):
 	colonne, ligne  = pixel2cell(x, y)
-	if 0 <= ligne < len(dicoJeu["ly"]) and 0 <= colonne < len(dicoJeu["ly"][0]):
+	if 0 <= ligne < len(dicoJeu["ly"]) and 0 <= colonne < len(dicoJeu["ly"][ligne]):
 		return True
 	else:
 		print("Erreur, coordonnées non comprises dans le labyrinthe")
@@ -236,7 +237,6 @@ def animations_tortue(x, y):
 	cell = typeCellule(ligne, colonne)
 	if cell == "sortie":
 		color("green")
-		print("Bravo, vous avez gagné")
 	elif cell == "carrefour":
 		color("pink")
 	elif cell == "impasse":
@@ -492,18 +492,21 @@ def explorer():
 		cellules.append(typeCell)
 		typeCell = typeCelluleHardcore(ligne, colonne) # update de la cellule
 	# Fin de boucle quand on trouve l'arrivé
-	print("------------------ Exploration automatique ------------------")
+	print("\n------------------ Exploration automatique ------------------")
 	suppr_detours(co_deplacement, cellules) # suppression des detours, pas encore uttilisé (ni verifié)
 	print("Vous avez gagné en", nb_deplacements, "déplacements.")
-	print("------------------ Exploration automatique ------------------")
+	print("------------------ Exploration automatique ------------------\n")
 
 ############################# Programme principal #############################
-nom_laby = input("Nom du labyrinthe : ")
-ly, In, Out = labyFromFile("Labys/" + nom_laby + ".laby")
-dicoJeu = {"ly" : ly, "In" : In, "Out" : Out, "tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : [], "difficultée" : {"vies" : 5, "temps" : 500, "actions" : 60}}
-bgcolor("black")
-speed('fastest')
-hideturtle()
+gamemode = input("Mode de jeu (affiche / select / auto / campagne): ")
+dicoJeu = {"tcell" : 40, "csg" : [-(window_width()/2) + 20 , (window_height()/2) - 20], "li deplacements" : [], "difficultée" : {"vies" : 5, "temps" : 100, "actions" : 80}}
+print("_________________________________________________\n")
+if gamemode != "campagne":
+	nom_laby = input("Nom du labyrinthe : ")
+	ly, In, Out = labyFromFile("Labys/" + nom_laby + ".laby")
+	dicoJeu["ly"] = ly ; dicoJeu["In"] = In ; dicoJeu["Out"] = Out
+	bgcolor("black") ; speed('fastest') ; hideturtle()
+	afficheGraphiquebonus()
 
 # P1 Exportation et affichage de labyrinthes :
 
@@ -525,27 +528,34 @@ hideturtle()
 
 # # 4 : Cases spéciales
 # print(typeCellule(1,1))
-afficheGraphiquebonus()
+# afficheGraphiquebonus()
 
 # P2 Navigation Guidée :
 
 # 6 : Navigation guidée
-ecran = Screen()
-up()
-goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
-down()
-showturtle()
-ecran.onkeypress(gauche,"Left")
-ecran.onkeypress(droite,"Right")
-ecran.onkeypress(haut,"Up")
-ecran.onkeypress(bas,"Down")
-ecran.onkeypress(quitter,"q")
-ecran.listen()
-
-# # alternative a mainloop() car celle ci ne se stoppe que si on ferme la fenetre (ici on arrete la boucle quand "q" est appuyé sur le clavier)
-# ecoute = True
-# while ecoute:
-# 	ecran.update()
+if gamemode == "select":
+	ecran = Screen()
+	up()
+	goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+	down()
+	showturtle()
+	ecran.onkeypress(gauche,"Left")
+	ecran.onkeypress(droite,"Right")
+	ecran.onkeypress(haut,"Up")
+	ecran.onkeypress(bas,"Down")
+	ecran.onkeypress(quitter,"q")
+	ecran.listen()
+	# alternative a mainloop() car celle ci ne se stoppe que si on ferme la fenetre (ici on arrete la boucle quand "q" est appuyé sur le clavier)
+	timeA = time()
+	timeB = time()
+	ecoute = True
+	while ecoute and dicoJeu["difficultée"]["vies"] > 0 and dicoJeu["difficultée"]["actions"] > 0 and (timeB - timeA) < dicoJeu["difficultée"]["temps"]: # Bonus ajouté : les difficlutées
+		ecran.update()
+		timeB = time()
+	if dicoJeu["difficultée"]["vies"] == 0 or dicoJeu["difficultée"]["actions"] == 0 or (timeB - timeA) > dicoJeu["difficultée"]["temps"]:
+		print("Perdu")
+	else:
+		print("Gagné, vous avez fini le niveau", nom_laby, "Il vous restais : \n",dicoJeu["difficultée"]["vies"], "vies \n",dicoJeu["difficultée"]["actions"], "actions \n", dicoJeu["difficultée"]["temps"] - (timeB - timeA), "segondes a jouer")
 
 # 6)-7)-8)
 # mouvements = list(dicoJeu["li deplacements"]) # on copie sans associativité sinon la liste augmenterais a chaque nouveau mouvement (y compris ceux des fonctions)
@@ -556,22 +566,19 @@ ecran.listen()
 # P3 Navigation automatique dans un labyrinthe simple :
 
 # 1)-2)-3)
-# explorer()
+if gamemode == "auto":
+	bgcolor("#7000c2")
+	explorer()
 
-# # 4) variante a l'énoncé : la tortue fait directement le chemin a l'écran dans la fonction explorer (et donc graçe a turtle) 
-# # donc on n'a pas besoin de tester le chemin dans la fonction suivreChemin(). On peut quand même la faire suivre le chemin trouvé.
+# 4) variante a l'énoncé : la tortue fait directement le chemin a l'écran dans la fonction explorer (et donc graçe a turtle) 
+# donc on n'a pas besoin de tester le chemin dans la fonction suivreChemin(). On peut quand même la faire suivre le chemin trouvé.
 
 # mouvements = list(dicoJeu["li deplacements"])
 # suivreChemin(mouvements)
 # inverserChemin(mouvements)
 # done()
 
-# problème actuel : fonction deja_explore qui prend trop ou pas assez de cas en compte 
-# (bloque parfois le chemin alors que c'est pas necessaire, et ne le bloque pas d'autre fois ce qui fait boucler indefiniement)
-
-# modification pour la complexité : créer une grille avec le nombre de passage sur chaque case au lieu de calculer a chaque fois pour toutes les cases avec .count
-
-# modification pour s'adapter : le nombre limite de passage sur une case dépend du type de la case (alors qu'avant c'etait 2 passage max quelle que soit la case) (pas suffisant)
+# problème actuel : fonction deja_explore qui prend trop ou pas assez de cas en compte (bloque parfois le chemin alors que c'est pas necessaire)
 
 # P4 Extensions :
 
@@ -590,6 +597,43 @@ ecran.listen()
 # 9 : donjons et tortues
 
 # créer des cases teleportation qui sont link 2 a 2 et qui permettent d'aller a un autre endroit ( 2 cases = 1 couleur)
-# proposer des difficultées differentes (nombre de vies, temps pour résoudre, nombre d'actions)
-# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran
+# proposer des difficultées differentes (nombre de vies, temps pour résoudre, nombre d'actions) afficher avec write
+# créer un objet collectable (pieces) qui sont comme des trophés dont le total est affiché a l'ecran afficher avec write
 # quand le labyrinthe est fini, passer au niveau suivant (faire une graduation de laby de plus en plus durs)
+if gamemode == "campagne":
+	bgcolor("#c28a00") ; speed('fastest')
+	lvl = 0
+	ecran = Screen()
+	ecoute = True
+	while ecoute and lvl <= 3:
+		ly, In, Out = labyFromFile("Labyscampagne/" + str(lvl) + ".laby")
+		dicoJeu["ly"] = ly ; dicoJeu["In"] = In ; dicoJeu["Out"] = Out
+		hideturtle()
+		afficheGraphiquebonus()
+		up()
+		goto(cell2pixel(dicoJeu["In"][0] , dicoJeu["In"][1]))
+		down()
+		showturtle()
+		ecran.onkeypress(gauche,"Left")
+		ecran.onkeypress(droite,"Right")
+		ecran.onkeypress(haut,"Up")
+		ecran.onkeypress(bas,"Down")
+		ecran.onkeypress(quitter,"q")
+		ecran.listen()
+		timeA = time()
+		timeB = time()
+		fini = False
+		while not fini and dicoJeu["difficultée"]["vies"] > 0 and dicoJeu["difficultée"]["actions"] > 0 and (timeB - timeA) < dicoJeu["difficultée"]["temps"]:
+			ecran.update()
+			timeB = time()
+			colonne, ligne  = pixel2cell(xcor(), ycor())
+			fini = (ligne == dicoJeu["Out"][0] and colonne == dicoJeu["Out"][1])
+		# resets de fin de niveau
+		if dicoJeu["difficultée"]["vies"] == 0 or dicoJeu["difficultée"]["actions"] == 0 or (timeB - timeA) > dicoJeu["difficultée"]["temps"]:
+			print("Perdu, vous avez atteint le niveau", lvl)
+			ecoute = False
+		else :
+			clear()
+			lvl += 1
+			dicoJeu["difficultée"]["vies"] += 1 ; dicoJeu["difficultée"]["actions"] += lvl*10 ; dicoJeu["difficultée"]["temps"] += lvl*10
+	print("Gagné, vous avez fini la campagne. Il vous restais : \n",dicoJeu["difficultée"]["vies"], "vies \n",dicoJeu["difficultée"]["actions"], "actions \n", dicoJeu["difficultée"]["temps"] - (timeB - timeA), "segondes a jouer")
